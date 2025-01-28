@@ -1,4 +1,4 @@
-name: Build ZXHN-F650-PassReader
+name: Build and Release ZXHN-F650-PassReader
 
 on:
   workflow_dispatch:  # 手动触发
@@ -29,6 +29,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.20'  # 你可以根据需要更改 Go 版本
+          cache: false        # 禁用缓存
 
       - name: Build binary
         run: |
@@ -39,3 +40,58 @@ jobs:
         with:
           name: ${{ matrix.output }}
           path: ${{ matrix.output }}
+
+  release:
+    runs-on: ubuntu-22.04
+    needs: build  # 依赖 build 任务
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: ./artifacts
+
+      - name: Generate version number
+        id: version
+        run: |
+          # 获取最新的 Release 版本号
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | grep -oP '"tag_name": "\K.*?(?=")' || echo "0.0.0")
+
+          # 解析版本号
+          IFS='.' read -r z y x <<< "$LATEST_VERSION"
+
+          # 版本号递增逻辑：x 每次 +1，满 10 进 1
+          x=$((x + 1))
+          if [ $x -ge 10 ]; then
+            x=0
+            y=$((y + 1))
+          fi
+          if [ $y -ge 10 ]; then
+            y=0
+            z=$((z + 1))
+          fi
+
+          # 生成新版本号
+          NEW_VERSION="$z.$y.$x"
+          echo "New version: $NEW_VERSION"
+
+          # 输出版本号到 GitHub Actions
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.new_version }}
+          release_name: Release ${{ steps.version.outputs.new_version }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/${{ matrix.output }}
+          asset_name: ${{ matrix.output }}
+          asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
