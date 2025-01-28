@@ -1,0 +1,41 @@
+name: Build ZXHN-F650-PassReader
+
+on:
+  workflow_dispatch:  # 手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: windows
+            arch: amd64
+            output: ZXHN-F650-PassReader-win-x64
+          - os: windows
+            arch: arm64
+            output: ZXHN-F650-PassReader-win-arm64
+          - os: linux
+            arch: amd64
+            output: ZXHN-F650-PassReader-linux-x64
+          - os: linux
+            arch: arm64
+            output: ZXHN-F650-PassReader-linux-arm64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'  # 你可以根据需要更改 Go 版本
+
+      - name: Build binary
+        run: |
+          CGO_ENABLED=0 GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o ${{ matrix.output }} .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.output }}
+          path: ${{ matrix.output }}
