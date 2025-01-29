@@ -1,0 +1,106 @@
+name: Build and Release ZXHN-F650-PassReader
+
+on:
+  workflow_dispatch: # 手动触发 workflow
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [windows, linux]
+        arch: [amd64, arm64]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '>=1.18' # 根据你的 Go 版本调整
+
+      - name: Build
+        run: |
+          CGO_ENABLED=0 GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build .
+          
+      - name: Rename binary
+        run: |
+          if [[ "${{ matrix.os }}" == "windows" && "${{ matrix.arch }}" == "amd64" ]]; then
+            mv ZXHN-F650-PassReader ZXHN-F650-PassReader-win-x64
+          elif [[ "${{ matrix.os }}" == "windows" && "${{ matrix.arch }}" == "arm64" ]]; then
+            mv ZXHN-F650-PassReader ZXHN-F650-PassReader-win-arm64
+          elif [[ "${{ matrix.os }}" == "linux" && "${{ matrix.arch }}" == "amd64" ]]; then
+            mv ZXHN-F650-PassReader ZXHN-F650-PassReader-linux-x64
+          elif [[ "${{ matrix.os }}" == "linux" && "${{ matrix.arch }}" == "arm64" ]]; then
+            mv ZXHN-F650-PassReader ZXHN-F650-PassReader-linux-arm64
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ZXHN-F650-PassReader-${{ matrix.os }}-${{ matrix.arch }}
+          path: |
+            ZXHN-F650-PassReader-win-x64
+            ZXHN-F650-PassReader-win-arm64
+            ZXHN-F650-PassReader-linux-x64
+            ZXHN-F650-PassReader-linux-arm64
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.run_id }} # 使用 run_id 作为 tag name
+          release_name: Release ${{ github.run_id }} # 使用 run_id 作为 release name
+          body: |
+            This is an automated release of ZXHN-F650-PassReader.
+            You can find the binaries below.
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/ZXHN-F650-PassReader-win-x64
+          asset_name: ZXHN-F650-PassReader-win-x64
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/ZXHN-F650-PassReader-win-arm64
+          asset_name: ZXHN-F650-PassReader-win-arm64
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/ZXHN-F650-PassReader-linux-x64
+          asset_name: ZXHN-F650-PassReader-linux-x64
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/ZXHN-F650-PassReader-linux-arm64
+          asset_name: ZXHN-F650-PassReader-linux-arm64
+          asset_content_type: application/octet-stream 
