@@ -60,7 +60,7 @@ jobs:
         uses: actions/create-release@v1
         id: create_release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: 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
         with:
           tag_name: ${{ github.run_id }} # 使用 run_id 作为 tag name
           release_name: Release ${{ github.run_id }} # 使用 run_id 作为 release name
@@ -71,7 +71,7 @@ jobs:
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: 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
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: artifacts/ZXHN-F650-PassReader-win-x64
@@ -80,7 +80,7 @@ jobs:
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: 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
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: artifacts/ZXHN-F650-PassReader-win-arm64
@@ -89,7 +89,7 @@ jobs:
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: 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
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: artifacts/ZXHN-F650-PassReader-linux-x64
@@ -98,7 +98,7 @@ jobs:
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: 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
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: artifacts/ZXHN-F650-PassReader-linux-arm64
